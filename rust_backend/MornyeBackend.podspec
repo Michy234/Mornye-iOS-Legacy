@@ -6,7 +6,7 @@ Pod::Spec.new do |spec|
   spec.license = { :type => 'MIT', :file => 'LICENSE' }
   spec.author = { 'Mornye' => 'noreply@mornye.local' }
   spec.source = { :path => '.' }
-  spec.ios.deployment_target = '16.0'
+  spec.ios.deployment_target = '15.0'
   spec.swift_version = '5.0'
   spec.static_framework = true
   # build_rust_backend.sh stages this spec beside the generated iOS artifacts.

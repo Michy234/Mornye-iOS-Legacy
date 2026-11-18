@@ -167,10 +167,10 @@ elif [[ "$PLATFORM" == "ios" ]]; then
     exit 1
   fi
   rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios
-  export IPHONEOS_DEPLOYMENT_TARGET=16.0
-  export BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_ios="-isysroot \"$(xcrun --sdk iphoneos --show-sdk-path)\" --target=arm64-apple-ios16.0"
-  export BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_ios_sim="-isysroot \"$(xcrun --sdk iphonesimulator --show-sdk-path)\" --target=arm64-apple-ios16.0-simulator"
-  export BINDGEN_EXTRA_CLANG_ARGS_x86_64_apple_ios="-isysroot \"$(xcrun --sdk iphonesimulator --show-sdk-path)\" --target=x86_64-apple-ios16.0-simulator"
+  export IPHONEOS_DEPLOYMENT_TARGET=15.0
+  export BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_ios="-isysroot \"$(xcrun --sdk iphoneos --show-sdk-path)\" --target=arm64-apple-ios15.0"
+  export BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_ios_sim="-isysroot \"$(xcrun --sdk iphonesimulator --show-sdk-path)\" --target=arm64-apple-ios15.0-simulator"
+  export BINDGEN_EXTRA_CLANG_ARGS_x86_64_apple_ios="-isysroot \"$(xcrun --sdk iphonesimulator --show-sdk-path)\" --target=x86_64-apple-ios15.0-simulator"
   for target in aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios; do
     cargo build --locked --release -p mornye-mobile --target "$target"
   done

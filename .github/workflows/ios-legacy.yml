@@ -1,0 +1,75 @@
+name: iOS 15 IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md']
+permissions:
+  contents: write
+concurrency:
+  group: ios-legacy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 120
+    env:
+      MORNYE_DISCORD_SDK: '0'
+      IPHONEOS_DEPLOYMENT_TARGET: '15.0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          channel: stable
+          flutter-version-file: .fvmrc
+          cache: true
+      - name: Resolve dependencies and patch Flutter
+        run: |
+          flutter pub get --enforce-lockfile
+          dart scripts/prepare_flutter_sdk.dart
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust_backend/target
+          key: ios15-rust-${{ runner.arch }}-${{ hashFiles('rust_backend/Cargo.lock', 'rust_backend/rust-toolchain.toml', 'scripts/build_rust_backend.sh') }}
+          restore-keys: ios15-rust-${{ runner.arch }}-
+      - name: Build Rust for iOS 15
+        run: bash scripts/build_ios.sh
+      - name: Prepare FFmpeg frameworks
+        working-directory: third_party/ffmpeg_kit_flutter_new_audio/ios
+        run: bash ../scripts/setup_ios.sh
+      - name: Install pods
+        working-directory: ios
+        run: pod install
+      - name: Build unsigned app
+        run: flutter build ios --release --no-codesign --target lib/main.dart
+      - name: Audit packaged native binaries
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_check_ios_minimum.py'
+          python3 scripts/check_backend_ios.py build/ios/iphoneos/Runner.app --backend rust --archs arm64 --platform ios --release
+          python3 scripts/check_ios_minimum.py build/ios/iphoneos/Runner.app
+      - name: Package IPA
+        run: |
+          mkdir -p build/legacy/Payload
+          cp -R build/ios/iphoneos/Runner.app build/legacy/Payload/
+          cd build/legacy
+          zip -qry Mornye-iOS15-unsigned.ipa Payload
+          shasum -a 256 Mornye-iOS15-unsigned.ipa > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mornye-iOS15-unsigned
+          path: |
+            build/legacy/*.ipa
+            build/legacy/SHA256SUMS
+          if-no-files-found: error
+      - name: Publish downloadable IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "ios15-build-${GITHUB_RUN_NUMBER}" \
+            build/legacy/Mornye-iOS15-unsigned.ipa build/legacy/SHA256SUMS \
+            --title "Mornye iOS 15 - build ${GITHUB_RUN_NUMBER}" \
+            --target "$GITHUB_SHA" \
+            --notes "Unsigned arm64 IPA for re-signing with Sideloadly, AltStore or SideStore. Minimum iOS 15.0. Discord Social SDK and home/remote playback extensions are excluded. Build and binary minimum-version audits passed; physical-device testing is still required."

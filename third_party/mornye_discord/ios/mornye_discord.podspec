@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.source = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.platform = :ios, '16.0'
+  s.platform = :ios, '15.0'
   sdk = 'Frameworks/discord_partner_sdk.xcframework'
   if ENV['MORNYE_DISCORD_SDK'] != '0' && File.directory?(File.join(__dir__, sdk))
     s.vendored_frameworks = sdk
