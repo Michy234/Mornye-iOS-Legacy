@@ -27,7 +27,8 @@ jobs:
         run: |
           flutter pub get --enforce-lockfile
           dart scripts/prepare_flutter_sdk.dart
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        id: rust-cache
         with:
           path: |
             ~/.cargo/registry
@@ -37,6 +38,14 @@ jobs:
           restore-keys: ios15-rust-${{ runner.arch }}-
       - name: Build Rust for iOS 15
         run: bash scripts/build_ios.sh
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        if: steps.rust-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust_backend/target
+          key: ${{ steps.rust-cache.outputs.cache-primary-key }}
       - name: Prepare FFmpeg frameworks
         working-directory: third_party/ffmpeg_kit_flutter_new_audio/ios
         run: bash ../scripts/setup_ios.sh

@@ -15,7 +15,12 @@ def version(value):
 
 
 def check_minos(output, path):
-    values = re.findall(r'^\s*(?:minos|version)\s+(\d+(?:\.\d+)+)', output, re.M)
+    values = re.findall(r'^\s*minos\s+(\d+(?:\.\d+)+)', output, re.M)
+    # Legacy commands use 'version'; linker tool versions use it too.
+    values += re.findall(
+        r'cmd LC_VERSION_MIN_IPHONEOS\s+cmdsize \d+\s+version (\d+(?:\.\d+)+)',
+        output,
+    )
     if not values:
         raise ValueError(f'{path}: no minimum OS load command')
     for value in values:
